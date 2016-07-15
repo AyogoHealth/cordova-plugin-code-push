@@ -52,6 +52,8 @@
             <runs/>
         </js-module>
 
+        <hook type="after_plugin_install" src="hooks/after_plugin_install/npm-install.js" />
+
         <platform name="android">
             <source-file src="src/android/CodePush.java" target-dir="src/com/microsoft/cordova" />
             <config-file target="config.xml" parent="/*">
