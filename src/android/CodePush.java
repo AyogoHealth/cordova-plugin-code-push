@@ -1,6 +1,8 @@
 package com.microsoft.cordova;
 
+import android.content.ContentResolver;
 import android.content.pm.PackageManager;
+import android.net.Uri;
 import android.os.AsyncTask;
 import android.util.Base64;
 
@@ -413,18 +415,18 @@ public class CodePush extends CordovaPlugin {
     }
 
     private void navigateToLocalDeploymentIfExists() {
-        CodePushPackageMetadata deployedPackageMetadata = this.codePushPackageManager.getCurrentPackageMetadata();
-        if (deployedPackageMetadata != null && deployedPackageMetadata.localPath != null) {
-            File startPage = this.getStartPageForPackage(deployedPackageMetadata.localPath);
-            if (startPage != null) {
-                /* file exists */
-                try {
-                    navigateToFile(startPage);
-                } catch (MalformedURLException e) {
-                    /* empty - if there is an exception, the app will launch with the bundled content */
-                }
-            }
-        }
+        //CodePushPackageMetadata deployedPackageMetadata = this.codePushPackageManager.getCurrentPackageMetadata();
+        //if (deployedPackageMetadata != null && deployedPackageMetadata.localPath != null) {
+        //    File startPage = this.getStartPageForPackage(deployedPackageMetadata.localPath);
+        //    if (startPage != null) {
+        //        /* file exists */
+        //        try {
+        //            navigateToFile(startPage);
+        //        } catch (MalformedURLException e) {
+        //            /* empty - if there is an exception, the app will launch with the bundled content */
+        //        }
+        //    }
+        //}
     }
 
     private boolean execPreInstall(CordovaArgs args, CallbackContext callbackContext) {
@@ -633,6 +635,38 @@ public class CodePush extends CordovaPlugin {
                     this.mainWebView.clearHistory();
                 }
             }
+        }
+
+        return null;
+    }
+
+
+    /**
+     * Intercept requests to load files from the app bundle and redirect them
+     * to the current package.
+     */
+    @Override
+    public Uri remapUri(Uri uri) {
+        String scheme = uri.getScheme();
+
+        if (!ContentResolver.SCHEME_FILE.equalsIgnoreCase(scheme) || !uri.getPath().startsWith("/android_asset/")) {
+            return null;
+        }
+
+
+        CodePushPackageMetadata deployedPackageMetadata = this.codePushPackageManager.getCurrentPackageMetadata();
+        if (deployedPackageMetadata != null && deployedPackageMetadata.localPath != null) {
+            File startPage = this.getStartPageForPackage(deployedPackageMetadata.localPath);
+            if (startPage == null) {
+                return null;
+            }
+
+            String remapped = uri.toString().replace("/android_asset", this.cordova.getActivity().getFilesDir() + deployedPackageMetadata.localPath);
+
+            Utilities.logMessage("††† Remapping URI: " + uri.toString());
+            Utilities.logMessage("††† Remapped  URI: " + remapped.toString());
+
+            return Uri.parse(remapped);
         }
 
         return null;
