@@ -433,6 +433,12 @@ StatusReport* rollbackStatusReport = nil;
     }
 }
 
++ (NSString*)getBundleHackLocation {
+    NSString * libraryLocation = [NSSearchPathForDirectoriesInDomains(NSLibraryDirectory, NSUserDomainMask, YES) objectAtIndex:0];
+    NSArray * locationArray = @[libraryLocation, @"NoCloud", @"www"];
+    return [NSString pathWithComponents: locationArray];
+}
+
 - (void)loadStoreVersion {
     NSString* mainBundlePath = [[NSBundle mainBundle] bundlePath];
     NSString* configStartPage = [self getConfigLaunchUrl];
